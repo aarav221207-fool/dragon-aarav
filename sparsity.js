@@ -8,8 +8,9 @@ function renderSparsity(inputIdx) {
 
   if (!captures.length) {
     container.innerHTML = `
-      <div class="placeholder">
-        No sparsity data available for this inference.
+      <div class="visual-empty">
+        <h2>No sparsity data</h2>
+        <p>No captured tensors are available for this inference.</p>
       </div>
     `;
     return;
@@ -27,14 +28,13 @@ function renderSparsity(inputIdx) {
   let html = `
     <div class="sparsity-dashboard">
 
-      <div class="viz-title">
-        Sparsity & Inference Analysis
+      <div class="view-heading">
+        <div>
+          <span class="eyebrow">02 · SPARSITY</span>
+          <h2>Sparsity Analysis</h2>
+          <p>Measure inactive computation across the current inference path.</p>
+        </div>
       </div>
-
-      <p class="viz-note">
-        Live tensor sparsity across the current inference path.
-        Select a layer to inspect its activation statistics.
-      </p>
 
       <div class="sparsity-summary">
 
@@ -61,10 +61,9 @@ function renderSparsity(inputIdx) {
       </div>
 
       <div class="chart-section">
-
         <div class="chart-heading">
-          <span>Layer sparsity</span>
-          <span class="chart-help">Click a layer</span>
+          <span>LAYER SPARSITY</span>
+          <span class="chart-help">click any layer</span>
         </div>
 
         <div class="sparsity-chart">
@@ -72,18 +71,19 @@ function renderSparsity(inputIdx) {
 
   captures.forEach((cap, index) => {
     const sp = cap.output.sparsity || 0;
+    const density = 1 - sp;
     const type = cap.module_path || 'unknown';
 
     html += `
       <button
-        class="sparsity-layer"
+        class="sparsity-layer ${selectedLayer === index ? 'selected' : ''}"
         type="button"
         onclick="selectSparsityLayer(${index})"
       >
 
         <div class="sparsity-layer-header">
           <span class="sparsity-layer-name">
-            ${index + 1}. ${type}
+            ${String(index + 1).padStart(2, '0')} · ${type}
           </span>
 
           <span class="sparsity-layer-value">
@@ -100,7 +100,7 @@ function renderSparsity(inputIdx) {
 
         <div class="sparsity-meta">
           <span>${cap.type}</span>
-          <span>${cap.output.numel.toLocaleString()} elements</span>
+          <span>${Number(cap.output.numel).toLocaleString()} elements · ${pct(density)} active</span>
         </div>
 
       </button>
@@ -112,12 +112,9 @@ function renderSparsity(inputIdx) {
       </div>
 
       <div class="chart-section">
-
         <div class="chart-heading">
-          <span>Inference trace</span>
-          <span class="chart-help">
-            activation density through the network
-          </span>
+          <span>INFERENCE DENSITY TRACE</span>
+          <span class="chart-help">active computation</span>
         </div>
 
         <div class="inference-trace">
@@ -126,24 +123,16 @@ function renderSparsity(inputIdx) {
   captures.forEach((cap, index) => {
     const sp = cap.output.sparsity || 0;
     const density = 1 - sp;
-    const type = cap.module_path || 'unknown';
 
     html += `
       <button
         type="button"
-        class="trace-node ${type}"
+        class="trace-node ${cap.module_path} ${selectedLayer === index ? 'selected' : ''}"
         onclick="selectSparsityLayer(${index})"
-        title="${cap.type} — ${pct(sp)} sparse"
       >
         <span class="trace-index">${index + 1}</span>
-
-        <span class="trace-name">
-          ${type}
-        </span>
-
-        <span class="trace-density">
-          ${pct(density)} active
-        </span>
+        <span class="trace-name">${cap.module_path}</span>
+        <span class="trace-density">${pct(density)} active</span>
       </button>
     `;
 
@@ -156,61 +145,53 @@ function renderSparsity(inputIdx) {
         </div>
       </div>
 
-      <div id="sparsityDetail" class="sparsity-detail">
-        <div class="sparsity-detail-empty">
-          Select a layer above to inspect the inference.
-        </div>
-      </div>
+      <div id="sparsityDetail" class="sparsity-detail"></div>
 
     </div>
   `;
 
   container.innerHTML = html;
 
-  selectSparsityLayer(0);
+  selectSparsityLayer(
+    selectedLayer < captures.length ? selectedLayer : 0
+  );
 }
-
 
 function selectSparsityLayer(index) {
   const data = BDH_DATA.inputs[currentInput];
 
   if (!data || !data.captures[index]) return;
 
+  selectedLayer = index;
+
   const cap = data.captures[index];
   const out = cap.output;
-
-  document
-    .querySelectorAll('.sparsity-layer')
-    .forEach((el, i) => {
-      el.classList.toggle('selected', i === index);
-    });
-
-  document
-    .querySelectorAll('.trace-node')
-    .forEach((el, i) => {
-      el.classList.toggle('selected', i === index);
-    });
-
+  const density = 1 - (out.sparsity || 0);
   const detail = document.getElementById('sparsityDetail');
 
-  if (!detail) return;
+  document.querySelectorAll('.sparsity-layer').forEach((el, i) => {
+    el.classList.toggle('selected', i === index);
+  });
 
-  const density = 1 - (out.sparsity || 0);
+  document.querySelectorAll('.trace-node').forEach((el, i) => {
+    el.classList.toggle('selected', i === index);
+  });
+
+  document.querySelectorAll('.layer-node').forEach((el, i) => {
+    el.classList.toggle('active', i === index);
+  });
+
+  if (!detail) return;
 
   detail.innerHTML = `
     <div class="detail-header">
 
       <div>
-        <span class="detail-kicker">
-          INFERENCE LAYER ${index + 1}
-        </span>
-
+        <span class="detail-kicker">INFERENCE LAYER ${index + 1}</span>
         <h3>${cap.module_path}</h3>
       </div>
 
-      <span class="detail-type">
-        ${cap.type}
-      </span>
+      <span class="detail-type">${cap.type}</span>
 
     </div>
 
@@ -223,7 +204,7 @@ function selectSparsityLayer(index) {
 
       <div>
         <span>Elements</span>
-        <strong>${out.numel.toLocaleString()}</strong>
+        <strong>${Number(out.numel).toLocaleString()}</strong>
       </div>
 
       <div>
@@ -246,17 +227,26 @@ function selectSparsityLayer(index) {
         <strong>${fmt(out.std)}</strong>
       </div>
 
+      <div>
+        <span>Min</span>
+        <strong>${fmt(out.min)}</strong>
+      </div>
+
+      <div>
+        <span>Max</span>
+        <strong>${fmt(out.max)}</strong>
+      </div>
+
     </div>
 
     <div class="activation-preview">
 
       <div class="chart-heading">
-        <span>Activation sample</span>
+        <span>ACTIVATION SAMPLE</span>
         <span class="chart-help">first ${out.sample.length} values</span>
       </div>
 
       <div class="activation-bars">
-
         ${out.sample.map((value, i) => {
 
           const max =
@@ -282,7 +272,6 @@ function selectSparsityLayer(index) {
             ></div>
           `;
         }).join('')}
-
       </div>
 
     </div>
