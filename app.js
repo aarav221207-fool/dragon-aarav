@@ -1,112 +1,453 @@
 let currentInput = 0;
 let currentSignal = 'pipeline';
+let selectedLayer = 0;
+
+function getCurrentData() {
+  return BDH_DATA.inputs[currentInput];
+}
 
 function renderTree() {
-  const data = BDH_DATA.inputs[currentInput];
-  const blocks = groupCaptures(data.captures);
-  let html = '';
-  
-  blocks.forEach((block, bi) => {
-    html += `<div class="block-group expanded">
-      <div class="block-header" onclick="toggleBlock(this)">
-        <span class="block-toggle">▶</span> Block ${bi + 1}
+  const data = getCurrentData();
+  if (!data) return;
+
+  const captures = data.captures || [];
+  const tree = document.getElementById('treeContent');
+  const count = document.getElementById('passCount');
+
+  if (!tree) return;
+
+  if (count) {
+    count.textContent = captures.length + ' passes';
+  }
+
+  tree.innerHTML = captures.map((cap, idx) => {
+    const type = cap.module_path || 'unknown';
+    const out = cap.output || {};
+
+    return `
+      <div
+        class="layer-node ${idx === selectedLayer ? 'active' : ''}"
+        onclick="selectLayer(${idx})"
+        data-idx="${idx}"
+      >
+        <span class="node-dot ${type}"></span>
+        <span class="node-name">${type}</span>
+        <span class="node-shape">${shapeStr(out.shape || [])}</span>
       </div>
-      <div class="block-items">`;
-    
-    block.forEach((cap, ci) => {
-      const type = cap.module_path;
-      const idx = data.captures.indexOf(cap);
-      html += `
-        <div class="layer-node" onclick="selectLayer(${idx})" data-idx="${idx}">
-          <span class="node-dot ${type}"></span>
-          <span class="node-name">${type}</span>
-          <span class="node-shape">${shapeStr(cap.output.shape)}</span>
-        </div>`;
-    });
-    
-    html += '</div></div>';
+    `;
+  }).join('');
+
+  if (captures.length) {
+    selectLayer(selectedLayer < captures.length ? selectedLayer : 0, true);
+  }
+}
+
+function selectLayer(idx, silent) {
+  const data = getCurrentData();
+  if (!data || !data.captures[idx]) return;
+
+  selectedLayer = idx;
+
+  document.querySelectorAll('.layer-node').forEach((node, i) => {
+    node.classList.toggle('active', i === idx);
   });
-  
-  document.getElementById('treeContent').innerHTML = html;
-}
 
-function toggleBlock(el) {
-  el.parentElement.classList.toggle('expanded');
-}
+  const cap = data.captures[idx];
+  const out = cap.output || {};
+  const stats = document.getElementById('statsContent');
 
-function selectLayer(idx) {
-  document.querySelectorAll('.layer-node').forEach(n => n.classList.remove('active'));
-  document.querySelector(`[data-idx="${idx}"]`)?.classList.add('active');
-  
-  const cap = BDH_DATA.inputs[currentInput].captures[idx];
-  const out = cap.output;
-  
-  document.getElementById('statsContent').innerHTML = `
-    <div class="stat-row"><span class="stat-label">Module</span><span class="stat-value">${cap.module_path}</span></div>
-    <div class="stat-row"><span class="stat-label">Type</span><span class="stat-value">${cap.type}</span></div>
-    <div class="stat-row"><span class="stat-label">Shape</span><span class="stat-value">${shapeStr(out.shape)}</span></div>
-    <div class="stat-row"><span class="stat-label">Elements</span><span class="stat-value">${out.numel.toLocaleString()}</span></div>
-    <div class="stat-row"><span class="stat-label">Sparsity</span><span class="stat-value highlight">${pct(out.sparsity)}</span></div>
-    <div class="stat-row"><span class="stat-label">Mean</span><span class="stat-value">${fmt(out.mean)}</span></div>
-    <div class="stat-row"><span class="stat-label">Std</span><span class="stat-value">${fmt(out.std)}</span></div>
-    <div class="stat-row"><span class="stat-label">Min</span><span class="stat-value">${fmt(out.min)}</span></div>
-    <div class="stat-row"><span class="stat-label">Max</span><span class="stat-value">${fmt(out.max)}</span></div>
-    <div class="sparkline">${out.sample.map(v => 
-      `<div class="spark-bar" style="height:${Math.max(2, Math.abs(v)/Math.max(Math.abs(out.min), out.max)*100)}%;opacity:${v===0?0.2:0.7}"></div>`
-    ).join('')}</div>`;
+  if (stats) {
+    stats.innerHTML = `
+      <div class="stat-row">
+        <span class="stat-label">Module</span>
+        <span class="stat-value">${cap.module_path}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Type</span>
+        <span class="stat-value">${cap.type}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Shape</span>
+        <span class="stat-value">${shapeStr(out.shape || [])}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Elements</span>
+        <span class="stat-value">${Number(out.numel || 0).toLocaleString()}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Sparsity</span>
+        <span class="stat-value highlight">${pct(out.sparsity || 0)}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Mean</span>
+        <span class="stat-value">${fmt(out.mean)}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Std</span>
+        <span class="stat-value">${fmt(out.std)}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Min / Max</span>
+        <span class="stat-value">${fmt(out.min)} / ${fmt(out.max)}</span>
+      </div>
+    `;
+  }
+
+  if (!silent && currentSignal === 'sparsity') {
+    if (typeof selectSparsityLayer === 'function') {
+      selectSparsityLayer(idx);
+    }
+  }
+
+  if (!silent && currentSignal === 'activations') {
+    renderComparison();
+  }
 }
 
 function renderSignal() {
   if (currentSignal === 'pipeline') {
     renderPipeline(currentInput);
-  }
-
-  else if (currentSignal === 'sparsity') {
+  } else if (currentSignal === 'sparsity') {
     renderSparsity(currentInput);
-  }
-
-  else if (currentSignal === 'activations') {
+  } else if (currentSignal === 'activations') {
     renderComparison();
-  }
-
-  else if (currentSignal === 'attention') {
-    renderLocked(
-      'Attention visualization requires the Q·Kᵀ attention matrix.'
-    );
-  }
-
-  else if (currentSignal === 'rope') {
-    renderLocked(
-      'RoPE visualization requires the position embedding frequency tensors.'
-    );
+  } else if (currentSignal === 'attention') {
+    renderAttention();
+  } else if (currentSignal === 'rope') {
+    renderRope();
   }
 }
 
-function renderLocked(msg) {
-  document.getElementById('vizContainer').innerHTML = `
-    <div class="locked-overlay">
-      <div class="lock-icon">🔒</div>
-      <h3>Signal Not Available</h3>
-      <p>${msg}</p>
-    </div>`;
+function renderAttention() {
+  const container = document.getElementById('vizContainer');
+  if (!container) return;
+
+  const data = getCurrentData();
+
+  if (!data || !data.attentionMap) {
+    container.innerHTML = `
+      <div class="visual-empty">
+        <div class="visual-icon">∿</div>
+        <h2>Attention data unavailable</h2>
+        <p>
+          Run a live inference first. Dragonforge will generate the causal
+          attention matrix for the current sentence.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  const map = data.attentionMap;
+  const tokens = data.tokens || [];
+  let head = Math.min(Number(data.selectedHead || 0), map.length - 1);
+
+  if (head < 0) head = 0;
+
+  const matrix = map[head] || [];
+
+  const values = matrix.flat();
+  let max = Math.max(...values.map(v => Math.abs(v)), 0.000001);
+
+  const labels = tokens.map(t => {
+    const n = Number(t);
+    if (n >= 32 && n <= 126) return String.fromCharCode(n);
+    return '·';
+  });
+
+  container.innerHTML = `
+    <div class="attention-view">
+
+      <div class="view-heading">
+        <div>
+          <span class="eyebrow">04 · ATTENTION</span>
+          <h2>Causal Attention Heatmap</h2>
+          <p>Raw Q·Kᵀ scores generated by the live browser inference.</p>
+        </div>
+
+        <div class="head-selector">
+          ${map.map((_, i) => `
+            <button
+              class="head-button ${i === head ? 'active' : ''}"
+              onclick="selectAttentionHead(${i})"
+            >
+              HEAD ${i + 1}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="heatmap-shell">
+        <div class="heatmap-top">
+          <div class="heatmap-corner">Q \\ K</div>
+          <div class="heatmap-labels">
+            ${labels.map((token, i) => `<span title="token ${i}">${i}<b>${escapeHtml(token)}</b></span>`).join('')}
+          </div>
+        </div>
+
+        <div class="heatmap-body">
+          <div class="heatmap-row-labels">
+            ${labels.map((token, i) => `<span>${i}<b>${escapeHtml(token)}</b></span>`).join('')}
+          </div>
+
+          <div class="heatmap-grid">
+            ${matrix.map((row, r) =>
+              row.map((value, c) => {
+                const intensity = Math.min(1, Math.abs(value) / max);
+
+                if (c >= r) {
+                  return `<div class="heat-cell future" title="q${r} → k${c}: masked"></div>`;
+                }
+
+                return `
+                  <div
+                    class="heat-cell"
+                    style="--intensity:${intensity}"
+                    title="query ${r} → key ${c}: ${Number(value).toExponential(3)}"
+                  ></div>
+                `;
+              }).join('')
+            ).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="heatmap-footer">
+        <span>LOW</span>
+        <div class="heat-gradient"></div>
+        <span>HIGH</span>
+        <code>${data.token_count} tokens · ${map.length} heads</code>
+      </div>
+
+    </div>
+  `;
 }
 
-// Event listeners
-document.getElementById('inputSelect').addEventListener('change', e => {
-  currentInput = parseInt(e.target.value);
-  renderTree();
-  renderSignal();
-});
+function selectAttentionHead(index) {
+  const data = getCurrentData();
+  if (!data) return;
+
+  data.selectedHead = index;
+  renderAttention();
+}
+
+function renderRope() {
+  const container = document.getElementById('vizContainer');
+  const data = getCurrentData();
+
+  if (!container || !data || !data.rope) {
+    if (container) {
+      container.innerHTML = `
+        <div class="visual-empty">
+          <div class="visual-icon">⊞</div>
+          <h2>RoPE data unavailable</h2>
+          <p>Run a live inference to generate the rotary position data.</p>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  const rope = data.rope;
+  const position = Number(data.selectedPosition || 0);
+  const maxPosition = Math.max(0, data.token_count - 1);
+
+  const phases = rope.phases[position] || [];
+  const freqs = rope.frequencies || [];
+
+  const bars = phases.slice(0, 32).map((phase, i) => {
+    const normalized = Math.abs(Math.sin(phase));
+    return `
+      <div class="rope-bar-wrap">
+        <div
+          class="rope-bar"
+          style="height:${Math.max(4, normalized * 100)}%"
+          title="dimension ${i}: ${phase.toFixed(5)} rad"
+        ></div>
+        <span>${i}</span>
+      </div>
+    `;
+  }).join('');
+
+  const token = data.tokens && data.tokens[position] !== undefined
+    ? data.tokens[position]
+    : 0;
+
+  const char = token >= 32 && token <= 126
+    ? String.fromCharCode(token)
+    : '·';
+
+  container.innerHTML = `
+    <div class="rope-view">
+
+      <div class="view-heading">
+        <div>
+          <span class="eyebrow">05 · POSITIONAL ENCODING</span>
+          <h2>RoPE Phase Visualisation</h2>
+          <p>Rotary phase generated from the same live inference path.</p>
+        </div>
+
+        <div class="rope-position">
+          <span>POSITION</span>
+          <strong>${position}</strong>
+          <b>"${escapeHtml(char)}"</b>
+        </div>
+      </div>
+
+      <div class="rope-control card">
+        <label for="ropePosition">Position</label>
+        <input
+          id="ropePosition"
+          type="range"
+          min="0"
+          max="${maxPosition}"
+          value="${position}"
+          oninput="selectRopePosition(this.value)"
+        >
+        <div class="range-labels">
+          <span>0</span>
+          <span>${maxPosition}</span>
+        </div>
+      </div>
+
+      <div class="rope-stats">
+        <div class="rope-stat">
+          <span>POSITION</span>
+          <strong>${position}</strong>
+        </div>
+        <div class="rope-stat">
+          <span>FREQUENCIES</span>
+          <strong>${freqs.length}</strong>
+        </div>
+        <div class="rope-stat">
+          <span>DIMENSIONS SHOWN</span>
+          <strong>${Math.min(32, phases.length)}</strong>
+        </div>
+        <div class="rope-stat">
+          <span>THETA</span>
+          <strong>65,536</strong>
+        </div>
+      </div>
+
+      <div class="rope-card card">
+        <div class="chart-heading">
+          <span>ROTARY PHASE</span>
+          <span class="chart-help">first 32 frequency dimensions</span>
+        </div>
+
+        <div class="rope-chart">
+          ${bars}
+        </div>
+      </div>
+
+      <div class="rope-table card">
+        <div class="chart-heading">
+          <span>POSITION FREQUENCIES</span>
+          <span class="chart-help">first 12 dimensions</span>
+        </div>
+
+        <div class="rope-table-grid">
+          ${freqs.slice(0, 12).map((freq, i) => `
+            <div>
+              <span>DIM ${i}</span>
+              <strong>${Number(freq).toExponential(5)}</strong>
+              <small>${Number(phases[i] || 0).toFixed(5)} rad</small>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+    </div>
+  `;
+}
+
+function selectRopePosition(value) {
+  const data = getCurrentData();
+  if (!data) return;
+
+  data.selectedPosition = Number(value);
+  renderRope();
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+const inputSelect = document.getElementById('inputSelect');
+
+if (inputSelect) {
+  inputSelect.addEventListener('change', function (event) {
+    currentInput = parseInt(event.target.value, 10) || 0;
+    selectedLayer = 0;
+
+    renderTree();
+    renderSignal();
+
+    if (typeof syncProbe === 'function') {
+      syncProbe();
+    }
+  });
+}
 
 document.querySelectorAll('.signal-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.signal-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.signal-btn').forEach(b => {
+      b.classList.remove('active');
+    });
+
     btn.classList.add('active');
     currentSignal = btn.dataset.signal;
+
     renderSignal();
   });
 });
 
-// Init
+function syncProbe() {
+  const data = getCurrentData();
+  if (!data) return;
+
+  const probe = document.getElementById('probeText');
+
+  if (probe) {
+    probe.value = data.text || '';
+  }
+
+  const inputChip = document.getElementById('inputChip');
+  const captureChip = document.getElementById('captureChip');
+
+  if (inputChip) {
+    inputChip.textContent = 'Inputs: ' + BDH_DATA.inputs.length;
+  }
+
+  if (captureChip) {
+    captureChip.textContent = 'Captures: ' + data.captures.length;
+  }
+
+  const presets = document.querySelectorAll('.preset-btn');
+
+  presets.forEach((button, index) => {
+    button.classList.toggle('active', index === currentInput);
+  });
+}
+
+function refreshApplication() {
+  syncProbe();
+  renderTree();
+  renderSignal();
+}
+
+window.refreshApplication = refreshApplication;
+window.renderTree = renderTree;
+window.renderSignal = renderSignal;
+window.selectLayer = selectLayer;
+window.selectAttentionHead = selectAttentionHead;
+window.selectRopePosition = selectRopePosition;
+
 renderTree();
 renderSignal();
+syncProbe();
