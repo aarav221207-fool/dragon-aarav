@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BDH Inspector — Dragon Hatchling Microscope</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="top-bar">
+  <div class="brand-block">
+    <div class="brand-row">
+      <span class="logo">🐉</span>
+      <h1>BDH Inspector</h1>
+      <span class="badge badge-green">Authoritative bdh.py</span>
+      <span class="badge">25.3M Params</span>
+    </div>
+    <p class="subtitle">Pathway Technology Dragon Hatchling Microscope &amp; Analytics</p>
+  </div>
+  <div class="status-chips">
+    <span class="chip chip-ok">✓ Forward Match: OK</span>
+    <span class="chip">Inputs: 3</span>
+    <span class="chip">Captures: 96</span>
+  </div>
+</header>
+
+<div class="probe-bar">
+  <div class="probe-input">
+    <span class="probe-icon">⌕</span>
+    <input id="probeText" type="text" readonly value="The cat sat">
+  </div>
+  <div class="presets" id="presetRow"></div>
+</div>
+
+<nav class="bottom-bar">
+  <button class="signal-btn active" data-signal="pipeline">◈ Pipeline</button>
+  <button class="signal-btn" data-signal="sparsity">▥ Sparsity</button>
+  <button class="signal-btn" data-signal="activations">◉ Activations</button>
+  <button class="signal-btn" data-signal="attention">∿ Attention</button>
+  <button class="signal-btn" data-signal="rope">⊞ RoPE</button>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="side-head">
+      <span class="panel-label">⬢ Layer Pipeline</span>
+      <span class="side-count" id="passCount"></span>
+    </div>
+    <div class="side-body" id="treeContent"></div>
+  </aside>
+
+  <main class="main">
+    <section class="panel">
+      <div class="panel-body" id="vizContainer"></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><span class="panel-label">ⓘ Layer Signal Stats</span></div>
+      <div class="panel-body" id="statsContent">
+        <p class="placeholder">Select a layer to see stats</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<select id="inputSelect" hidden>
+  <option value="0">"The cat sat"</option>
+  <option value="1">"Machine learning is"</option>
+  <option value="2">"The quick brown fox jumps over the lazy dog"</option>
+</select>
+
+<script src="data.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/pipeline.js"></script>
+<script src="js/sparsity.js"></script>
+<script src="js/comparison.js"></script>
+<script src="js/app.js"></script>
+<script src="js/topology.js"></script>
+<script src="js/unlock.js"></script>
+<script src="js/gain.js"></script>
+<script src="js/insights.js"></script>
+<script src="js/live.js"></script>
+<script>
+(function () {
+  var sel = document.getElementById('inputSelect');
+  var probe = document.getElementById('probeText');
+  var row = document.getElementById('presetRow');
+  var count = document.getElementById('passCount');
+  if (!sel || !row || typeof BDH_DATA === 'undefined') return;
+
+  BDH_DATA.inputs.forEach(function (inp, i) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'preset-btn'; b.textContent = '"' + inp.text + '"';
+    b.addEventListener('click', function () { sel.value = String(i); sel.dispatchEvent(new Event('change')); });
+    row.appendChild(b);
+  });
+
+  function sync() {
+    var i = parseInt(sel.value) || 0;
+    var inp = BDH_DATA.inputs[i];
+    if (probe) probe.value = inp.text;
+    if (count) count.textContent = inp.captures.length + ' passes';
+    row.querySelectorAll('.preset-btn').forEach(function (x, j) { x.classList.toggle('active', j === i); });
+  }
+  sel.addEventListener('change', sync);
+  sync();
+})();
+</script>
+</body>
+</html>

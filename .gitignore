@@ -1,0 +1,23 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Node modules (if you add any later)
+node_modules/
+
+# Python cache (for your instrumentation script)
+__pycache__/
+*.pyc
+*.pyo
+
+# Large data files (keep JSON small)
+*.json.bak
