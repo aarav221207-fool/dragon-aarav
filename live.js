@@ -116,7 +116,7 @@
   document.querySelector('.probe-bar').appendChild(note);
 
   var btn = document.createElement('button');
-  btn.type = 'button'; btn.className = 'preset-btn'; btn.textContent = '▶ Run live (JS mirror)';
+  btn.type = 'button'; btn.className = 'preset-btn'; btn.textContent = '▶ Run inference';
   btn.addEventListener('click', function () {
     var text = (probe.value || '').trim(); if (!text) return;
     btn.textContent = '… computing'; btn.disabled = true;
