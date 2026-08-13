@@ -1269,101 +1269,572 @@ body {
 
 
 /* =========================================================
-   SPARSITY
+   SPARSITY DASHBOARD
    ========================================================= */
 
-.sparsity-bar-group {
-  margin-bottom: 16px;
+.sparsity-dashboard {
+  width: min(100%, 900px);
+  margin: 0 auto;
+}
+
+.sparsity-summary {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 10px;
+
+  margin: 18px 0 22px;
+}
+
+.sparsity-stat {
+  min-height: 82px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  padding: 13px;
+
+  background: var(--bg-elevated);
+
+  border: 1px solid var(--border);
+
+  border-radius: 10px;
+}
+
+.sparsity-stat span {
+  font:
+    500 9px
+    Inter,
+    sans-serif;
+
+  text-transform: uppercase;
+
+  letter-spacing: .08em;
+
+  color: var(--dim);
+}
+
+.sparsity-stat strong {
+  font:
+    600 17px
+    "JetBrains Mono",
+    monospace;
+
+  color: var(--text);
+}
+
+.sparsity-stat:nth-child(1) strong {
+  color: var(--cyan);
+}
+
+.sparsity-stat:nth-child(2) strong {
+  color: var(--green);
+}
+
+.sparsity-stat:nth-child(3) strong {
+  color: var(--orange);
+}
+
+.chart-section {
+  margin-top: 20px;
+}
+
+.chart-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 10px;
+
+  color: var(--text);
+
+  font:
+    600 11px
+    "JetBrains Mono",
+    monospace;
+}
+
+.chart-help {
+  color: var(--dim);
+
+  font:
+    400 9px
+    "JetBrains Mono",
+    monospace;
 }
 
 
-.sparsity-label {
-  display: flex;
+/* =========================================================
+   INTERACTIVE LAYER SPARSITY
+   ========================================================= */
 
+.sparsity-chart {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.sparsity-layer {
+  width: 100%;
+
+  padding: 10px 12px;
+
+  background: var(--bg-elevated);
+
+  border: 1px solid var(--border);
+
+  border-radius: 9px;
+
+  color: var(--text);
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background .15s ease,
+    border-color .15s ease,
+    transform .15s ease;
+}
+
+.sparsity-layer:hover {
+  background: var(--panel-hover);
+
+  border-color: var(--border-strong);
+
+  transform: translateX(2px);
+}
+
+.sparsity-layer.selected {
+  border-color: rgba(77, 163, 255, .45);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(77, 163, 255, .09),
+      rgba(77, 163, 255, .025)
+    );
+
+  box-shadow:
+    inset 2px 0 var(--cyan);
+}
+
+.sparsity-layer-header {
+  display: flex;
   justify-content: space-between;
 
-  align-items: center;
-
   margin-bottom: 7px;
+}
 
+.sparsity-layer-name {
   font:
     500 11px
     "JetBrains Mono",
     monospace;
-
-  color: var(--text-secondary);
 }
 
+.sparsity-layer-value {
+  font:
+    600 11px
+    "JetBrains Mono",
+    monospace;
 
-.sparsity-label span:last-child {
-  color: var(--text);
-
-  font-weight: 600;
+  color: var(--cyan);
 }
-
 
 .sparsity-track {
-  height: 10px;
+  width: 100%;
+  height: 9px;
 
-  background: var(--bg);
+  overflow: hidden;
+
+  background: #070b11;
 
   border: 1px solid var(--border);
 
   border-radius: 999px;
-
-  overflow: hidden;
-
-  box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.20);
 }
-
 
 .sparsity-fill {
   height: 100%;
 
+  min-width: 0;
+
   border-radius: inherit;
 
-  transition: width 0.30s ease;
+  transition:
+    width .35s ease;
 }
-
 
 .sparsity-fill.embed {
   background:
     linear-gradient(
       90deg,
       #377fc9,
-      var(--blue)
+      #69b7ff
     );
 }
-
 
 .sparsity-fill.ln {
   background:
     linear-gradient(
       90deg,
       #2d9b5c,
-      var(--green)
+      #45d483
     );
 }
-
 
 .sparsity-fill.attn {
   background:
     linear-gradient(
       90deg,
       #ad7622,
-      var(--orange)
+      #e5a63a
     );
 }
-
 
 .sparsity-fill.drop {
   background:
     linear-gradient(
       90deg,
-      #aab8c8,
+      #718096,
       #e6edf7
     );
+}
+
+.sparsity-meta {
+  display: flex;
+  justify-content: space-between;
+
+  margin-top: 6px;
+
+  color: var(--dim);
+
+  font:
+    400 9px
+    "JetBrains Mono",
+    monospace;
+}
+
+
+/* =========================================================
+   INFERENCE TRACE
+   ========================================================= */
+
+.inference-trace {
+  display: flex;
+
+  align-items: stretch;
+
+  gap: 6px;
+
+  padding: 14px;
+
+  overflow-x: auto;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.015),
+      transparent
+    );
+
+  border: 1px solid var(--border);
+
+  border-radius: 10px;
+}
+
+.trace-node {
+  min-width: 105px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+
+  padding: 10px;
+
+  border: 1px solid var(--border);
+
+  border-radius: 8px;
+
+  background: var(--bg-elevated);
+
+  color: var(--text);
+
+  cursor: pointer;
+
+  text-align: left;
+
+  transition:
+    transform .15s ease,
+    border-color .15s ease,
+    background .15s ease;
+}
+
+.trace-node:hover {
+  transform: translateY(-2px);
+
+  background: var(--panel-hover);
+
+  border-color: var(--border-strong);
+}
+
+.trace-node.selected {
+  border-color: var(--cyan);
+
+  background: rgba(77,163,255,.08);
+
+  box-shadow:
+    0 0 0 1px rgba(77,163,255,.10);
+}
+
+.trace-index {
+  color: var(--dim);
+
+  font:
+    500 8px
+    "JetBrains Mono";
+}
+
+.trace-name {
+  font:
+    600 11px
+    "JetBrains Mono";
+}
+
+.trace-density {
+  color: var(--green);
+
+  font:
+    400 9px
+    "JetBrains Mono";
+}
+
+.trace-arrow {
+  align-self: center;
+
+  color: var(--border-strong);
+
+  font-size: 15px;
+}
+
+
+/* =========================================================
+   SPARSITY DETAIL PANEL
+   ========================================================= */
+
+.sparsity-detail {
+  margin-top: 12px;
+
+  padding: 16px;
+
+  background: var(--bg-elevated);
+
+  border: 1px solid var(--border);
+
+  border-radius: 10px;
+}
+
+.sparsity-detail-empty {
+  color: var(--dim);
+
+  text-align: center;
+
+  padding: 20px;
+
+  font:
+    400 10px
+    "JetBrains Mono";
+}
+
+.detail-header {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+
+  gap: 15px;
+
+  margin-bottom: 15px;
+}
+
+.detail-kicker {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: var(--cyan);
+
+  font:
+    500 8px
+    "JetBrains Mono";
+
+  letter-spacing: .12em;
+}
+
+.detail-header h3 {
+  font-size: 15px;
+
+  font-weight: 600;
+
+  color: var(--text);
+}
+
+.detail-type {
+  padding: 5px 8px;
+
+  border: 1px solid var(--border);
+
+  border-radius: 6px;
+
+  color: var(--dim);
+
+  font:
+    400 9px
+    "JetBrains Mono";
+}
+
+.detail-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 7px;
+}
+
+.detail-grid > div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+
+  padding: 9px;
+
+  background: var(--panel);
+
+  border: 1px solid var(--border);
+
+  border-radius: 7px;
+}
+
+.detail-grid span {
+  color: var(--dim);
+
+  font:
+    500 8px
+    Inter;
+  
+  text-transform: uppercase;
+
+  letter-spacing: .07em;
+}
+
+.detail-grid strong {
+  color: var(--text);
+
+  font:
+    500 11px
+    "JetBrains Mono";
+}
+
+.detail-grid strong.highlight {
+  color: var(--green);
+}
+
+
+/* =========================================================
+   ACTIVATION SAMPLE
+   ========================================================= */
+
+.activation-preview {
+  margin-top: 16px;
+
+  padding-top: 14px;
+
+  border-top: 1px solid var(--border);
+}
+
+.activation-bars {
+  height: 90px;
+
+  display: flex;
+
+  align-items: flex-end;
+
+  gap: 4px;
+
+  padding: 10px;
+
+  background: #070b11;
+
+  border: 1px solid var(--border);
+
+  border-radius: 8px;
+}
+
+.activation-bar {
+  flex: 1;
+
+  min-width: 3px;
+
+  max-width: 20px;
+
+  background:
+    linear-gradient(
+      180deg,
+      var(--cyan),
+      rgba(77,163,255,.25)
+    );
+
+  border-radius: 3px 3px 0 0;
+
+  opacity: .85;
+
+  transition:
+    opacity .15s ease,
+    transform .15s ease;
+}
+
+.activation-bar:hover {
+  opacity: 1;
+
+  transform: translateY(-2px);
+}
+
+.activation-bar.zero {
+  background: var(--border-strong);
+
+  opacity: .35;
+}
+
+
+/* =========================================================
+   MOBILE SPARSITY
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+  .sparsity-summary {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .detail-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .trace-node {
+    min-width: 95px;
+  }
+
 }
 
 
