@@ -1,8 +1,40 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 
-:root{
-  --bg:#0a0e14; --panel:#0e141c; --panel2:#101823; --border:#1c2534; --border2:#2a3648;
-  --text:#dbe7ff; --dim:#8b98ab; --cyan:#6ab0ff; --green:#3fb950; --orange:#d29922; --red:#f85149; --blue:#58a6ff;
+:root {
+  --bg: #070b11;
+  --bg-elevated: #0b1119;
+
+  --panel: #0d141d;
+  --panel-raised: #111a25;
+  --panel-hover: #151f2c;
+
+  --border: #1b2735;
+  --border-strong: #2a3a4d;
+
+  --text: #e6edf7;
+  --text-secondary: #a5b2c3;
+  --dim: #718096;
+
+  --cyan: #69b7ff;
+  --blue: #4da3ff;
+
+  --green: #45d483;
+  --orange: #e5a63a;
+  --red: #f2635b;
+
+  --accent-soft: rgba(77,163,255,.10);
+  --green-soft: rgba(69,212,131,.10);
+
+  --radius-sm: 7px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-panel:
+    0 12px 30px rgba(0,0,0,.18);
+
+  --shadow-active:
+    0 0 0 1px rgba(77,163,255,.18),
+    0 8px 24px rgba(0,0,0,.20);
 }
 
 html,body{ height:100%; }
