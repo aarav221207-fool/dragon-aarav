@@ -57,11 +57,29 @@ function selectLayer(idx) {
 }
 
 function renderSignal() {
-  if (currentSignal === 'pipeline') renderPipeline(currentInput);
-  else if (currentSignal === 'sparsity') renderSparsity(currentInput);
-  else if (currentSignal === 'activations') renderComparison();
-  else if (currentSignal === 'attention') renderLocked('Attention heatmaps require [4,seq,seq] weight matrices. Hook the Q·Kᵀ intermediate tensor in the Attention module to unlock.');
-  else if (currentSignal === 'rope') renderLocked('RoPE visualization requires inv_freq, cos_cached, and sin_cached tensors from the position embedding module.');
+  if (currentSignal === 'pipeline') {
+    renderPipeline(currentInput);
+  }
+
+  else if (currentSignal === 'sparsity') {
+    renderSparsity(currentInput);
+  }
+
+  else if (currentSignal === 'activations') {
+    renderComparison();
+  }
+
+  else if (currentSignal === 'attention') {
+    renderLocked(
+      'Attention visualization requires the Q·Kᵀ attention matrix.'
+    );
+  }
+
+  else if (currentSignal === 'rope') {
+    renderLocked(
+      'RoPE visualization requires the position embedding frequency tensors.'
+    );
+  }
 }
 
 function renderLocked(msg) {
