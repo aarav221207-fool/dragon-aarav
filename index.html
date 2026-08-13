@@ -1,13 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dragonforge — BDH Inspector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<header class="top-bar">
+  <div class="brand-block">
+    <div class="brand-row">
+      <span class="logo">🐉</span>
+      <div>
+        <h1>Dragonforge</h1>
+        <p class="subtitle">BDH Inspector · Dragon Hatchling Microscope &amp; Analytics</p>
+      </div>
+      <span class="badge badge-green">LIVE INFERENCE</span>
+      <span class="badge">25.3M Params</span>
+    </div>
+  </div>
+
+  <div class="status-chips">
+    <span class="chip chip-ok" id="statusChip">✓ READY</span>
+    <span class="chip" id="inputChip">Inputs: 1</span>
+    <span class="chip" id="captureChip">Captures: 4</span>
+  </div>
+</header>
+
+<section class="probe-bar">
+
+  <div class="probe-input">
+    <span class="probe-icon">⌕</span>
+
+    <input
+      id="probeText"
+      type="text"
+      value="The cat sat"
+      placeholder="Enter a sentence to inspect..."
+      autocomplete="off"
+      spellcheck="false"
+    >
+
+    <button
+      id="runInference"
+      class="run-button"
+      type="button"
+    >
+      ▶ Run inference
+    </button>
+  </div>
+
+  <div class="run-status" id="runStatus">
+    Ready for inference.
+  </div>
+
+  <div class="presets" id="presetRow"></div>
+
+</section>
+
+<nav class="bottom-bar">
+
+  <button
+    class="signal-btn active"
+    type="button"
+    data-signal="pipeline"
+  >
+    ◈ Pipeline
+  </button>
+
+  <button
+    class="signal-btn"
+    type="button"
+    data-signal="sparsity"
+  >
+    ▥ Sparsity
+  </button>
+
+  <button
+    class="signal-btn"
+    type="button"
+    data-signal="activations"
+  >
+    ◉ Activations
+  </button>
+
+  <button
+    class="signal-btn"
+    type="button"
+    data-signal="attention"
+  >
+    ∿ Attention
+  </button>
+
+  <button
+    class="signal-btn"
+    type="button"
+    data-signal="rope"
+  >
+    ⊞ RoPE
+  </button>
+
+</nav>
+
+<div class="layout">
+
+  <aside class="sidebar">
+
+    <div class="side-head">
+      <span class="panel-label">⬢ Layer Pipeline</span>
+      <span class="side-count" id="passCount">4 passes</span>
+    </div>
+
+    <div class="side-body" id="treeContent"></div>
+
+  </aside>
+
+  <main class="main">
+
+    <section class="panel main-visual-panel">
+
+      <div class="panel-head">
+        <div class="panel-label">Dragonforge Analysis</div>
+      </div>
+
+      <div class="panel-body" id="vizContainer"></div>
+
+    </section>
+
+  </main>
+
+</div>
+
+<select id="inputSelect" hidden>
+  <option value="0">The cat sat</option>
+</select>
+
 <script src="data.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/pipeline.js"></script>
-<script src="js/sparsity.js"></script>
-<script src="js/comparison.js"></script>
-<script src="js/app.js"></script>
-<script src="js/topology.js"></script>
-<script src="js/unlock.js"></script>
-<script src="js/gain.js"></script>
-<script src="js/insights.js"></script>
-<script src="js/live.js"></script>
-<script src="js/attention.js"></script>
-<script src="js/rope.js"></script>
+<script src="utils.js"></script>
+<script src="pipeline.js"></script>
+<script src="sparsity.js"></script>
+<script src="comparison.js"></script>
+<script src="app.js"></script>
+<script src="unlock.js"></script>
+<script src="live.js"></script>
+
+</body>
+</html>
